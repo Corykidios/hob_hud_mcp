@@ -1,0 +1,9 @@
+mcp
+fastmcp
+neo4j>=5.0
+qdrant-client>=1.7
+openai>=1.0
+python-dotenv
+numpy
+scipy
+spacy

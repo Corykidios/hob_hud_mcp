@@ -51,3 +51,6 @@ class MistralEmbedder:
                 results.extend([[0.0] * self.vector_size] * len(batch))
             time.sleep(1.0)  # 1 RPS free tier
         return results
+
+    def unload_model(self):
+        pass  # no-op, API client needs no cleanup

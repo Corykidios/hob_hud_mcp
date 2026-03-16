@@ -7,6 +7,7 @@ import sys
 import os
 import json
 import logging
+import hashlib
 from typing import Optional
 
 # Pull in graphrag-hybrid source directly
@@ -25,7 +26,6 @@ from query_engine import QueryEngine
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 logger = logging.getLogger(__name__)
 
-# --- Config shim (matches the config.get() interface the managers expect) ---
 class Cfg:
     def __init__(self):
         self._d = {
@@ -63,7 +63,6 @@ class Cfg:
                 return default
         return val
 
-# --- Initialize ---
 config = Cfg()
 embedder = MistralEmbedder()
 neo4j = Neo4jManager(config)
@@ -73,8 +72,6 @@ qdrant.connect()
 engine = QueryEngine(neo4j, qdrant, embedding_processor=embedder)
 
 mcp = FastMCP("hob_hud")
-
-# --- Tools ---
 
 @mcp.tool()
 def hybrid_search(query: str, limit: int = 5, category: Optional[str] = None) -> str:
@@ -131,6 +128,35 @@ def get_neo4j_schema() -> str:
         labels = session.run("CALL db.labels()").data()
         rel_types = session.run("CALL db.relationshipTypes()").data()
     return json.dumps({"labels": labels, "relationship_types": rel_types}, indent=2, default=str)
+
+@mcp.tool()
+def qdrant_store(information: str, collection_name: str, metadata: Optional[str] = None) -> str:
+    """Store information in Qdrant with a Mistral embedding."""
+    from qdrant_client.http import models
+    meta = json.loads(metadata) if metadata else {}
+    vector = embedder.get_embedding(information)
+    int_id = int(hashlib.md5(information[:64].encode()).hexdigest()[:8], 16)
+    qdrant.client.upsert(
+        collection_name=collection_name,
+        points=[models.PointStruct(
+            id=int_id,
+            vector=vector,
+            payload={"text": information, **meta}
+        )]
+    )
+    return json.dumps({"ok": True, "id": int_id, "collection": collection_name})
+
+@mcp.tool()
+def qdrant_find(query: str, collection_name: str, limit: int = 5) -> str:
+    """Find relevant information in a Qdrant collection by semantic search."""
+    vector = embedder.get_embedding(query)
+    results = qdrant.client.search(
+        collection_name=collection_name,
+        query_vector=vector,
+        limit=limit
+    )
+    out = [{"score": r.score, "text": r.payload.get("text", ""), "payload": r.payload} for r in results]
+    return json.dumps(out, indent=2, default=str)
 
 @mcp.tool()
 def qdrant_list_collections() -> str:

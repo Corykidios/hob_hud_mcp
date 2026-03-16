@@ -1,110 +1,55 @@
-# Hob HUD — MCP Server
+# hob_hud_mcp
 
-> *A heads-up display for AI database access.*
+Cori's MCP server. Mercury / Air / Hill.
 
-**10 tools. Two databases. One server.**
+Hybrid GraphRAG retrieval over Neo4j + Qdrant with Mistral embeddings. Part of the Echoing Orpheus Studios infrastructure — one of the ten Hob servers, blending three source repositories into a single coherent tool surface.
 
-Hob HUD gives any MCP-compatible AI agent direct, structured access to a local Neo4j graph database and Qdrant vector store — plus a high-level GraphRAG pipeline layered on top of both.
+## Sources
 
-Built as part of the Penedi memory infrastructure: a personal knowledge graph for navigating 32,000+ AI conversations, recovering lost personas, and tracing the shape of a life through language.
+- [rileylemm/graphrag-hybrid](https://github.com/rileylemm/graphrag-hybrid) — core Neo4j+Qdrant database layer
+- [swapnilk2/neo4j_mcp](https://github.com/swapnilk2/neo4j_mcp) — Neo4j direct access patterns
+- [qdrant/mcp-server-qdrant](https://github.com/qdrant/mcp-server-qdrant) — Qdrant collection management patterns
 
----
+## Prerequisites
 
-## Tools
+- Python 3.9+
+- Docker (Neo4j + Qdrant via graphrag-hybrid's docker-compose)
+- [graphrag-hybrid](https://github.com/rileylemm/graphrag-hybrid) cloned to `C:/c/apps/servers/graphrag-hybrid`
+- Mistral API key (free tier)
 
-### GraphRAG Pipeline (3 tools)
-| Tool | Description |
-|------|-------------|
-| `ask_graph_rag` | Query the knowledge graph with natural language |
-| `ingest_to_graph` | Extract entities + relationships from text and store permanently |
-| `clear_graph` | Wipe the GraphRAG store (destructive — ask first) |
+## Setup
 
-### Neo4j — Direct Cypher Access (3 tools)
-| Tool | Description |
-|------|-------------|
-| `neo4j_schema` | Inspect labels, relationship types, properties, indexes, constraints |
-| `neo4j_read` | Execute any read-only Cypher query |
-| `neo4j_write` | Execute any write Cypher query (CREATE, MERGE, SET, DELETE) |
-
-### Qdrant — Direct Vector Store Access (4 tools)
-| Tool | Description |
-|------|-------------|
-| `qdrant_collections` | List, create, inspect, or delete collections |
-| `qdrant_store` | Embed text and store it with metadata |
-| `qdrant_search` | Semantic search with optional metadata filters |
-| `qdrant_points` | Count, retrieve, scroll, or delete raw points |
-
----
-
-## Requirements
-
-- Python 3.10+
-- Running Neo4j instance (default: `bolt://localhost:7687`)
-- Running Qdrant instance (default: `localhost:6333`)
-- An OpenAI-compatible embedding endpoint (tested with NVIDIA NIM)
-
-```
-pip install mcp fastmcp neo4j qdrant-client openai python-dotenv
+```bash
+git clone https://github.com/Corykidios/hob_hud_mcp
+cd hob_hud_mcp
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env
+# edit .env with your values
+python server.py
 ```
 
----
+## Tools (10)
 
-## Configuration
+| Tool | Description |
+|------|-------------|
+| `hybrid_search` | Semantic + graph expansion. Best for exploratory retrieval. |
+| `semantic_search` | Pure vector similarity against Qdrant. |
+| `suggest_related` | Graph traversal from a doc ID. |
+| `get_categories` | All categories in the Neo4j graph. |
+| `get_statistics` | Full system health: node counts, vector counts. |
+| `read_neo4j_cypher` | Run any read Cypher query. |
+| `write_neo4j_cypher` | Run any write Cypher query. |
+| `get_neo4j_schema` | Labels, relationship types, constraints. |
+| `qdrant_list_collections` | All Qdrant collections. |
+| `qdrant_collection_info` | Info on a specific collection. |
 
-Copy `.env.example` to `.env` and fill in your values:
-
-```env
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=your_password
-
-QDRANT_HOST=localhost
-QDRANT_PORT=6333
-
-OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
-OPENAI_API_KEY=your_nim_key
-OPENAI_EMBEDDING_MODEL=nvidia/nv-embedqa-e5-v5
-OPENAI_VECTOR_DIMENSION=1024
-OPENAI_INFERENCE_MODEL=meta/llama-3.3-70b-instruct
-
-# Path to graph_rag project (needed for GraphRAG pipeline tools)
-HOB_HUD_GRAPH_RAG_DIR=C:\path\to\Qdrant-Neo4j-Ollama-Graph-Rag
-HOB_HUD_ENV=C:\path\to\Qdrant-Neo4j-Ollama-Graph-Rag\.env
-```
-
----
-
-## Claude Desktop
+## Claude Desktop Config
 
 ```json
-"hob_hud": {
-  "command": "C:\\path\\to\\venv\\Scripts\\python.exe",
-  "args": ["C:\\c\\apps\\hob_hud_mcp\\server.py"]
+"hob_hud_mcp": {
+  "command": "C:\\c\\apps\\servers\\hob_hud_mcp\\venv\\Scripts\\python.exe",
+  "args": ["C:\\c\\apps\\servers\\hob_hud_mcp\\server.py"]
 }
 ```
-
-## Letta
-
-Register as a stdio MCP server pointing to `server.py` using the same venv Python.
-
----
-
-## Architecture
-
-```
-hob_hud_mcp/
-├── server.py        ← single-file MCP server (all 10 tools)
-├── .env.example
-└── README.md
-```
-
-The GraphRAG tools depend on the `Qdrant-Neo4j-Ollama-Graph-Rag` project being cloned and configured separately. The Neo4j and Qdrant tools are fully standalone.
-
----
-
-## Name
-
-*Hob* — a crafting surface, the flat top of a hearth. A place where things are made.  
-*HUD* — heads-up display. What you see when you need to act without looking away.
-
-Part of the **Penedi** project.

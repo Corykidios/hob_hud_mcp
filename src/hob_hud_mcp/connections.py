@@ -13,6 +13,7 @@ import os
 import warnings
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Optional
 
 from dotenv import load_dotenv
@@ -21,7 +22,8 @@ from pymongo.database import Database
 from neo4j import AsyncGraphDatabase, AsyncDriver
 from qdrant_client import AsyncQdrantClient
 
-load_dotenv()
+# Load .env from the repo root regardless of working directory
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 
 def _optional(key: str, default: str = "") -> str:
@@ -40,20 +42,19 @@ class Connections:
     embedding_model: str
 
 
-
 @asynccontextmanager
 async def lifespan(_app: Any):
     """
     Open all three DB connections at startup, yield the shared state,
     close cleanly on shutdown. Neo4j and Qdrant failures are non-fatal.
     """
-    # ── MongoDB ────────────────────────────────────────────────────────────────
+    # ── MongoDB ─────────────────────────────────────────────────────────
     mongo_uri = _optional("MONGO_URI", "mongodb://localhost:27017")
     mongo_client: MongoClient = MongoClient(mongo_uri)
     mongo_client.admin.command("ping")
     mongo_db = mongo_client[_optional("MONGO_DB", "hob_hud")]
 
-    # ── Neo4j (non-fatal) ──────────────────────────────────────────────────────
+    # ── Neo4j (non-fatal) ────────────────────────────────────────────────
     neo4j_driver: Optional[AsyncDriver] = None
     neo4j_error = ""
     try:
@@ -76,7 +77,7 @@ async def lifespan(_app: Any):
             stacklevel=2,
         )
 
-    # ── Qdrant (non-fatal) ─────────────────────────────────────────────────────
+    # ── Qdrant (non-fatal) ────────────────────────────────────────────────
     qdrant_client: Optional[AsyncQdrantClient] = None
     qdrant_error = ""
     try:

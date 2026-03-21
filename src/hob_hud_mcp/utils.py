@@ -13,8 +13,8 @@ from .connections import Connections
 
 
 def get_connections(ctx: Context) -> Connections:
-    """Pull the shared Connections object from lifespan state."""
-    return ctx.request_context.lifespan_state["connections"]
+    """Pull the shared Connections object from lifespan context."""
+    return ctx.request_context.lifespan_context["connections"]
 
 
 def ok(data: Any) -> str:

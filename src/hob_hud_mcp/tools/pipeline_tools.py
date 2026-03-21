@@ -279,6 +279,11 @@ class HudRelateInput(BaseModel):
 
 async def run_hud_relate(params: HudRelateInput, ctx: Context) -> str:
     conns = get_connections(ctx)
+    if conns.neo4j is None:
+        return err(
+            "Neo4j is not connected.",
+            f"Fix the password in .env (NEO4J_PASSWORD) and restart. Detail: {conns.neo4j_error}",
+        )
     op = params.operation.strip().lower()
 
     try:

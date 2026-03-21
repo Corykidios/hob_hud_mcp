@@ -79,6 +79,11 @@ async def run_hud_vector(params: HudVectorInput, ctx: Context) -> str:
     import uuid
 
     conns = get_connections(ctx)
+    if conns.qdrant is None:
+        return err(
+            "Qdrant is not connected.",
+            f"Free the lock (kill stale python processes) and restart. Detail: {conns.qdrant_error}",
+        )
     op = params.operation.strip().lower()
     collection = params.collection or conns.qdrant_default_collection
 

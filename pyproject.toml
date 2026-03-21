@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hob-hud-mcp"
+version = "0.2.0"
+description = "Corpus intelligence MCP server — MongoDB, Neo4j, Qdrant"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=2.0.0",
+    "pymongo>=4.6.0",
+    "neo4j>=5.18.0",
+    "qdrant-client>=1.9.0",
+    "fastembed>=0.3.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.6.0",
+]
+
+[project.scripts]
+hob-hud-mcp = "hob_hud_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hob_hud_mcp"]
